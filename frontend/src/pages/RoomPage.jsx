@@ -1,31 +1,36 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import BingoBoard from '../components/BingoBoard';
+import { api } from '../services/api';
 
 export default function RoomPage() {
   const { id } = useParams();
-
-  // tworzymy 25 pól: id od 0 do 24, każde z wartością i statusem 'free'
-  const initialCells = Array.from({ length: 25 }, (_, i) => ({
+  const initial = Array.from({ length: 25 }, (_, i) => ({
     id: i,
     value: i + 1,
     status: 'free',
   }));
+  const [cells, setCells] = useState(initial);
+  const [error, setError] = useState(null);
 
-  const [cells, setCells] = useState(initialCells);
-
-  // po kliknięciu pola zmieniamy jego status na 'taken'
-  const handleCellClick = (cellId) => {
-    setCells((prev) =>
-      prev.map((c) =>
-        c.id === cellId ? { ...c, status: c.status === 'free' ? 'taken' : c.status } : c
-      )
-    );
+  const handleCellClick = async (cellId) => {
+    try {
+      await api.post(`/rooms/${id}/cells/${cellId}/reserve`);
+      setCells((c) => c.map((x) => (x.id === cellId ? { ...x, status: 'taken' } : x)));
+      setError(null);
+    } catch (e) {
+      if (e.response?.status === 409) {
+        setError('To pole jest już zajęte!');
+      } else {
+        setError('Błąd rezerwacji pola.');
+      }
+    }
   };
 
   return (
     <div style={{ padding: 20 }}>
       <h1>Pokój: {id}</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <BingoBoard cells={cells} onCellClick={handleCellClick} />
     </div>
   );
