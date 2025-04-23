@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import List
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from .routers import register
+from .routers import register,login
 
 
 app = FastAPI()
@@ -33,7 +33,7 @@ app.add_middleware(
 )
 
 app.include_router(register.router)
-
+app.include_router(login.router)
 @app.get("/ping")
 async def ping():
     return{"message":"pong"}

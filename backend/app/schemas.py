@@ -12,3 +12,9 @@ class UserResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class LoginRequest(BaseModel):
+
+    email: EmailStr       # must be a valid email format
+    password: str         # plain-text password
+
