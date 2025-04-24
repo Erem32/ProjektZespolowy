@@ -1,6 +1,7 @@
 import React from 'react';
 import Cell from './Cell';
 import '../index.css';
+import '../pages/RoomPage.css';
 
 export default function BingoBoard({ cells, onCellClick }) {
   return (
