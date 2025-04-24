@@ -4,15 +4,33 @@
   margin: 0 auto;
 }
 
-.dashboard-container h1 {
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
-  color: #333;
+.dashboard-title {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #222;
   text-align: center;
 }
 
-.room-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+.dashboard-search {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-search input {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.dashboard-search input:focus {
+  outline: none;
+  border-color: #4f9cf9;
+  box-shadow: 0 0 0 3px rgba(79, 156, 249, 0.3);
 }

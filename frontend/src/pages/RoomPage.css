@@ -1,67 +1,66 @@
-/* kontener całej strony pokoju */
+/* src/pages/RoomPage.css */
+
 .room-container {
-  padding: 2rem;
-  max-width: 800px;
+  padding: 2rem 1rem;
+  max-width: 600px;
   margin: 0 auto;
-}
-
-/* nagłówek pokoju */
-.room-container h1 {
-  font-size: 1.75rem;
-  margin-bottom: 1rem;
   text-align: center;
-  color: #333;
 }
 
-/* komunikat błędu */
+.room-title {
+  font-size: 2.25rem;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
 .error-message {
-  color: #e53935;
-  text-align: center;
+  color: #e74c3c;
   margin-bottom: 1rem;
+  font-weight: bold;
 }
 
-/* wrapper dla planszy */
-.bingo-board-wrapper {
+/* wrapper żeby ograniczyć szerokość planszy */
+.board-wrapper {
   display: flex;
   justify-content: center;
-  margin-top: 1rem;
+  padding: 1rem;
+  background: #ecf0f1;
+  border-radius: 12px;
 }
 
-/* sama plansza: siatka, obramowanie i tło */
+/* bingo-board otrzymałem w komponencie */
 .bingo-board {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  padding: 1rem;
-  background: #f7f7f7;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  gap: 0.5rem;
 }
 
-/* komórka bingo */
-.cell {
+/* style komórek */
+.bingo-board .cell {
   width: 60px;
   height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  border: 1px solid #333;
+  line-height: 60px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  border: 2px solid #2980b9;
+  border-radius: 8px;
   background: #fff;
   cursor: pointer;
   transition:
+    transform 0.1s,
     background 0.2s,
-    transform 0.1s;
+    color 0.2s;
 }
 
-/* stan wolny – efekt hover */
-.cell.free:hover {
-  background: #e0f7fa;
-  transform: scale(1.05);
+.bingo-board .cell.free:hover {
+  transform: scale(1.1);
+  background: #3498db;
+  color: #fff;
 }
 
-/* stan zajęty */
-.cell.taken {
-  background: #90ee90;
+.bingo-board .cell.taken {
+  background: #2980b9;
+  color: #ecf0f1;
   cursor: default;
 }

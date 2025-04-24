@@ -1,0 +1,33 @@
+.cell {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border: 2px solid #2980b9;
+  border-radius: 6px;
+  transition:
+    transform 0.15s,
+    background-color 0.2s,
+    color 0.2s;
+  user-select: none;
+}
+
+.cell.free {
+  background-color: #fff;
+  color: #2980b9;
+  cursor: pointer;
+}
+
+.cell.free:hover {
+  background-color: #3498db;
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.cell.taken {
+  background-color: #2980b9;
+  color: #ecf0f1;
+  cursor: default;
+}

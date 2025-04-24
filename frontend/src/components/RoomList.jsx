@@ -1,18 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { fetchRooms } from '../services/mockApi';
+import React from 'react';
 import RoomCard from './RoomCard';
+import './RoomList.css';
 
-export default function RoomList({ onEnter }) {
-  const [rooms, setRooms] = useState([]);
-
-  useEffect(() => {
-    fetchRooms().then(setRooms);
-  }, []);
+export default function RoomList({ rooms, onEnter }) {
+  // Gdy nie ma żadnych pokoi
+  if (!rooms.length) {
+    return <p className="no-rooms">Brak dostępnych pokoi.</p>;
+  }
 
   return (
-    <div className="room-list" style={{ display: 'flex', flexWrap: 'wrap' }}>
-      {rooms.map((r) => (
-        <RoomCard key={r.id} room={r} onEnter={onEnter} />
+    <div className="room-list">
+      {rooms.map((room) => (
+        <RoomCard key={room.id} room={room} onEnter={onEnter} />
       ))}
     </div>
   );
