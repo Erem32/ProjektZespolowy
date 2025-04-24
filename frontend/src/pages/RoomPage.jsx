@@ -1,38 +1,35 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import BingoBoard from '../components/BingoBoard';
-import { api } from '../services/api';
 import './RoomPage.css';
 
 export default function RoomPage() {
   const { id } = useParams();
-  const initialCells = Array.from({ length: 25 }, (_, i) => ({
-    id: i,
-    value: i + 1,
-    status: 'free',
-  }));
-  const [cells, setCells] = useState(initialCells);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
+  const [cells, setCells] = useState([]);
 
-  const handleCellClick = async (cellId) => {
-    try {
-      await api.post(`/rooms/${id}/cells/${cellId}/reserve`);
-      setCells((prev) => prev.map((c) => (c.id === cellId ? { ...c, status: 'taken' } : c)));
-      setError(null);
-    } catch (e) {
-      if (e.response?.status === 409) {
-        setError('To pole jest już zajęte!');
-      } else {
-        setError('Błąd rezerwacji pola.');
-      }
-    }
+  useEffect(() => {
+    // tutaj fetchujesz komórki z API, na razie wrzucimy przykładowe:
+    const initial = Array.from({ length: 25 }, (_, i) => ({
+      id: i + 1,
+      value: i + 1,
+      status: 'free',
+    }));
+    setCells(initial);
+  }, [id]);
+
+  const handleCellClick = (cellId) => {
+    // tutaj Twój kod rezerwacji, np. fetch do backendu
+    // w razie błędu:
+    // setError('Błąd rezerwacji pola.');
+    console.log('Kliknięto komórkę', cellId);
   };
 
   return (
     <div className="room-container">
-      <h1>Pokój: {id}</h1>
-      {error && <p className="error-message">{error}</p>}
-      <div className="bingo-board-wrapper">
+      <h1 className="room-title">Pokój: {id}</h1>
+      {error && <div className="error-message">{error}</div>}
+      <div className="board-wrapper">
         <BingoBoard cells={cells} onCellClick={handleCellClick} />
       </div>
     </div>
