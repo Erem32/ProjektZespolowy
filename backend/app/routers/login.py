@@ -1,10 +1,9 @@
-# backend/app/routers/login.py
-
 from fastapi import APIRouter, HTTPException
 from ..schemas import LoginRequest
 from app.database import database
 from app.models import User
 from sqlalchemy import select
+import hashlib
 
 router = APIRouter(
     prefix="/auth",
@@ -21,10 +20,20 @@ async def login_user(payload: LoginRequest):
     user = await database.fetch_one(stmt)
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        # Do not reveal whether the email exists
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    # Just echoing back for now — normally you'd verify the password here
+    # Verify password
+    hashed_input = hashlib.sha256(data["password"].encode()).hexdigest()
+    if hashed_input != user["hashed_password"]:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    # Successful login
     return {
-        "message": "User found!",
-        "user": dict(user)
+        "message": "Login successful!",
+        "user": {
+            "id": user["id"],
+            "email": user["email"],
+            # omit hashed_password
+        }
     }
