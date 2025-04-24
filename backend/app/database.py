@@ -1,38 +1,27 @@
-# backend/app/database.py
+# app/database.py
 
-from dotenv import load_dotenv
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-# 1) Load the .env file
+from databases import Database  # ← correct import
+from dotenv import load_dotenv
 load_dotenv()
 
-# 2) Pick up the DATABASE_URL (sqlite or future Postgres)
+
+# Read the URL from env or fall back to SQLite for local dev
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
 
-# Create the engine
-if DATABASE_URL.startswith("sqlite"):
-    # for SQLite, we need check_same_thread=False
-    engine = create_engine(
-        DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        pool_pre_ping=True,
-    )
-else:
-    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+# Create the SQLAlchemy engine (for table creation, migrations, etc.)
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+)
 
-#Create a session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Collect table metadata here
+metadata = MetaData()
 
-#Base class for models
-Base = declarative_base()
+# Base class for your ORM models
+Base = declarative_base(metadata=metadata)
 
-#Dependency for FastAPI endpoints
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Async database connection manager
+database = Database(DATABASE_URL)
