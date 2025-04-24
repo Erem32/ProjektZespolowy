@@ -1,20 +1,23 @@
-# backend/app/routers/login.py
-from fastapi import APIRouter
-from ..schemas import LoginRequest
+from fastapi import APIRouter, HTTPException, Depends, status
+from sqlalchemy.orm import Session
+from .. import crud, schemas, security
+from ..database import get_db
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["auth"],
-)
+router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/login")
-def login_user(payload: LoginRequest):
-    # turn the Pydantic model into a plain dict
-    data = payload.model_dump()
-    # quick print to verify you got it
-    print("👉 Received login payload:", data)
-    # echo back so the frontend sees it too
-    return {
-        "message": "Received login data!",
-        "your_data": data
-    }
+@router.post("/login", response_model=schemas.TokenResponse)
+def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
+    # 1) Verify credentials
+    user = crud.authenticate_user(db, payload.email, payload.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # 2) Issue a JWT
+    token = security.create_access_token(data={"sub": user.email})
+
+    # 3) Return the token to the client
+    return {"access_token": token, "token_type": "bearer"}

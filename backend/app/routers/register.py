@@ -1,19 +1,18 @@
-# backend/app/routers/register.py
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from .. import crud, schemas
+from ..database import get_db
 
-from fastapi import APIRouter
-from ..schemas import RegisterRequest
+router = APIRouter(prefix="/auth", tags=["auth"])
 
-router = APIRouter(
-    prefix="/auth",      # all routes here start with /auth
-    tags=["auth"],
-)
+@router.post("/register", response_model=schemas.UserResponse)
+def register(payload: schemas.RegisterRequest, db: Session = Depends(get_db)):
+    # 1) Check if email is already taken
+    if crud.get_user_by_email(db, payload.email):
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-@router.post("/register")
-def register_user(payload: RegisterRequest):
-    # ✅ Use model_dump() instead of dict()
-    data = payload.model_dump()
-    print("👉 Received payload:", data)
-    return {
-        "message": "Received registration data!",
-        "your_data": data
-    }
+    # 2) Create a new user (hashes password, inserts row)
+    user = crud.create_user(db, name=payload.name, email=payload.email, password=payload.password)
+
+    # 3) Return the newly created user (id, name, email)
+    return user
