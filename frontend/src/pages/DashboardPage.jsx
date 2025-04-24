@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// zamiast api:
 import { fetchRooms } from '../services/mockApi';
 import RoomList from '../components/RoomList';
+import './DashboardPage.css';
 
 export default function DashboardPage() {
   const [rooms, setRooms] = useState([]);
@@ -13,9 +13,11 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div style={{ padding: 20 }}>
+    <div className="dashboard-container">
       <h1>Dashboard – lista pokoi</h1>
-      <RoomList rooms={rooms} onEnter={(id) => navigate(`/room/${id}`)} />
+      <div className="room-list">
+        <RoomList rooms={rooms} onEnter={(id) => navigate(`/room/${id}`)} />
+      </div>
     </div>
   );
 }
