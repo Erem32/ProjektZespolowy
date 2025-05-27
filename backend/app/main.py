@@ -9,6 +9,7 @@ from app.database import engine, Base
 from app import models
 from fastapi import FastAPI
 from app.database import database
+from app.routers import rooms
 
 app = FastAPI()
 
@@ -25,8 +26,6 @@ async def shutdown():
 models.Base.metadata.create_all(bind=engine)
 
 
-
-app = FastAPI()
 
 
 # @asynccontextmanager
@@ -53,6 +52,7 @@ app.add_middleware(
 
 app.include_router(register.router)
 app.include_router(login.router)
+app.include_router(rooms.router)
 @app.get("/ping")
 async def ping():
     return{"message":"pong"}

@@ -18,3 +18,18 @@ class LoginRequest(BaseModel):
     email: EmailStr       # must be a valid email format
     password: str         # plain-text password
 
+#nowe
+class RoomCreate(BaseModel):
+    name: str
+    password: str
+
+class RoomOut(BaseModel):
+    id: int
+    name: str
+
+class JoinRoomRequest(BaseModel):
+    user_id: int
+    password: str
+
+class JoinRoomResponse(BaseModel):
+    color: str

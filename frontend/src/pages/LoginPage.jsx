@@ -13,7 +13,19 @@ export default function LoginPage() {
     const { email, password } = data;
     try {
       const response = await api.post('/auth/login', { email, password });
-      localStorage.setItem('accessToken', response.data.access_token);
+
+      // Zakładam, że response.data wygląda tak:
+      // { message: "Login successful!", user: { id: ..., email: ... } }
+      const { user, message } = response.data;
+
+      // Zapisz userId (konieczne do join room) i ewentualnie token
+      localStorage.setItem('userId', user.id);
+      // Jeśli masz też token zwracany:
+      if (response.data.access_token) {
+        localStorage.setItem('accessToken', response.data.access_token);
+      }
+
+      // Przejdź na dashboard
       navigate('/dashboard');
     } catch (error) {
       alert(error.response?.data?.detail || 'Nie udało się zalogować – spróbuj ponownie.');
