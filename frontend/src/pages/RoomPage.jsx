@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import BingoBoard from '../components/BingoBoard';
-import { api } from '../services/api';
+import { reserveCell } from '../services/api';
 import './RoomPage.css';
 
 export default function RoomPage() {
@@ -16,7 +16,7 @@ export default function RoomPage() {
 
   const handleCellClick = async (cellId) => {
     try {
-      await api.post(`/rooms/${id}/cells/${cellId}/reserve`);
+      await reserveCell(id, cellId);
       setCells((prev) => prev.map((c) => (c.id === cellId ? { ...c, status: 'taken' } : c)));
       setError(null);
     } catch (e) {

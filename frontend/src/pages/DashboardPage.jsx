@@ -1,7 +1,7 @@
 // src/pages/DashboardPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchRooms, createRoom } from '../services/mockApi';
+import { fetchRooms, createRoom, joinRoom } from '../services/api';
 import RoomList from '../components/RoomList';
 import CreateRoomButton from '../components/CreateRoomButton';
 import './DashboardPage.css';
