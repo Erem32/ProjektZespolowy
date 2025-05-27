@@ -18,3 +18,14 @@ class LoginRequest(BaseModel):
     email: EmailStr       # must be a valid email format
     password: str         # plain-text password
 
+class RoomBase(BaseModel):
+    name: str
+
+class RoomCreate(RoomBase):
+    password: str    # client-supplied plain password
+
+class RoomRead(RoomBase):
+    id: int
+
+    class Config:
+        orm_mode = True

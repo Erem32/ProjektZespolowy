@@ -5,3 +5,4 @@ databases
 pydantic
 python-multipart  # For handling file uploads, if needed later
 aiofiles         # For async file processing
+passlib[bcrypt]

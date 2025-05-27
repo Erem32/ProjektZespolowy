@@ -12,6 +12,7 @@ class Room(Base):
     __tablename__ = "rooms"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
+    password_hash = Column(String, nullable=True)    
 
 class Square(Base):
     __tablename__ = "squares"

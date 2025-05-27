@@ -1,6 +1,15 @@
-export const fetchRooms = () =>
-  Promise.resolve([
-    { id: '1', name: 'Pokój A', players: 3 },
-    { id: '2', name: 'Pokój B', players: 5 },
-    { id: '3', name: 'Pokój C', players: 2 },
-  ]);
+// frontend/src/services/api.js
+export async function fetchRooms() {
+  const res = await fetch('http://localhost:8000/rooms');
+  return res.json();
+}
+
+export async function createRoom(name, password) {
+  const res = await fetch('http://localhost:8000/rooms', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, password }),
+  });
+  if (!res.ok) throw new Error('Failed to create room');
+  return res.json(); // { id: 5, name: "My Room" }
+}

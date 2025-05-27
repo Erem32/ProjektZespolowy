@@ -9,7 +9,7 @@ from app.database import engine, Base
 from app import models
 from fastapi import FastAPI
 from app.database import database
-
+from .routers import rooms
 app = FastAPI()
 
 @app.on_event("startup")
@@ -50,6 +50,7 @@ app.add_middleware(
 
 app.include_router(register.router)
 app.include_router(login.router)
+app.include_router(rooms.router)
 @app.get("/ping")
 async def ping():
     return{"message":"pong"}
