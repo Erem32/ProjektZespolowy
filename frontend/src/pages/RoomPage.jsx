@@ -1,36 +1,63 @@
-import React, { useEffect, useState } from 'react';
+// src/pages/RoomPage.jsx
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import BingoBoard from '../components/BingoBoard';
-import './RoomPage.css';
+import api from '../api';
+import './RoomPage.css'; // ← make sure this path is correct
 
-export default function RoomPage() {
-  const { id } = useParams();
+export default function RoomPage({ userId }) {
+  const { id: roomId } = useParams();
+  const [squares, setSquares] = useState([]);
   const [error, setError] = useState('');
-  const [cells, setCells] = useState([]);
 
   useEffect(() => {
-    // tutaj fetchujesz komórki z API, na razie wrzucimy przykładowe:
-    const initial = Array.from({ length: 25 }, (_, i) => ({
-      id: i + 1,
-      value: i + 1,
-      status: 'free',
-    }));
-    setCells(initial);
-  }, [id]);
+    api
+      .get(`/rooms/${roomId}/squares`)
+      .then((res) => setSquares(res.data))
+      .catch((e) => {
+        console.error(e);
+        setError('Nie udało się pobrać planszy.');
+      });
+  }, [roomId]);
 
-  const handleCellClick = (cellId) => {
-    // tutaj Twój kod rezerwacji, np. fetch do backendu
-    // w razie błędu:
-    // setError('Błąd rezerwacji pola.');
-    console.log('Kliknięto komórkę', cellId);
+  const handleClick = async (sq) => {
+    if (sq.owner_id) return;
+    try {
+      const res = await api.post(`/rooms/${roomId}/squares/${sq.index}/claim`, {
+        user_id: Number(userId),
+      });
+      setSquares((prev) =>
+        prev.map((s) =>
+          s.id === res.data.id ? { ...s, owner_id: res.data.owner_id, color: res.data.color } : s
+        )
+      );
+    } catch (e) {
+      console.error(e);
+      setError('Nie udało się zarezerwować pola.');
+    }
   };
 
   return (
     <div className="room-container">
-      <h1 className="room-title">Pokój: {id}</h1>
+      <h1 className="room-title">Pokój #{roomId}</h1>
       {error && <div className="error-message">{error}</div>}
+
       <div className="board-wrapper">
-        <BingoBoard cells={cells} onCellClick={handleCellClick} />
+        <div className="bingo-board">
+          {squares.map((sq) => {
+            const isFree = !sq.owner_id;
+            const cellClass = isFree ? 'cell free' : 'cell taken';
+            return (
+              <div
+                key={sq.id}
+                className={cellClass}
+                style={sq.color && !isFree ? { background: sq.color } : {}}
+                onClick={() => isFree && handleClick(sq)}
+              >
+                {isFree ? sq.index + 1 : ''}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
