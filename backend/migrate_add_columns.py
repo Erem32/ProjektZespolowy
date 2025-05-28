@@ -18,12 +18,7 @@ def add_column(table, column_def):
             print(f"ℹ️  Kolumna już istnieje: {table}.{column_def.split()[0]}")
         else:
             raise
-
-# Dodajemy kolor do users (tekst, może być null)
-add_column("users", "color TEXT")
-
-# Dodajemy password do rooms (tekst, non-null, domyślnie pusty)
-add_column("rooms", "password TEXT NOT NULL DEFAULT ''")
+add_column("rooms", "winner_id INTEGER")
 
 conn.commit()
 conn.close()

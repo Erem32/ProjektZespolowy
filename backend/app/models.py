@@ -12,7 +12,8 @@ class Room(Base):
     __tablename__ = "rooms"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
-    password = Column(String, nullable=False)        
+    password = Column(String, nullable=False)
+    winner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
 class Square(Base):
     __tablename__ = "squares"

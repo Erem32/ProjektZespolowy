@@ -1,5 +1,5 @@
 # backend/app/routers/rooms.py
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, insert, update
 from app.database import database
@@ -12,8 +12,10 @@ from app.schemas import (
     SquareOut,
     ClaimSquareRequest,
     ClaimSquareResponse,
+    RoomDetail
 )
 import hashlib, random
+from sqlalchemy import outerjoin
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -115,14 +117,50 @@ async def list_squares(room_id: int):
         for r in rows
     ]
 
+
+WIN_PATTERNS: List[List[int]] = [
+    # rows
+    [0,1,2,3,4],
+    [5,6,7,8,9],
+    [10,11,12,13,14],
+    [15,16,17,18,19],
+    [20,21,22,23,24],
+    # columns
+    [0,5,10,15,20],
+    [1,6,11,16,21],
+    [2,7,12,17,22],
+    [3,8,13,18,23],
+    [4,9,14,19,24],
+    # diagonals
+    [0,6,12,18,24],
+    [4,8,12,16,20],
+]
+
+async def check_win(room_id: int, user_id: int) -> Optional[List[int]]:
+    """Return the first winning pattern found, or None."""
+    # fetch all indices claimed by this user in this room
+    rows = await database.fetch_all(
+        select(Square.index)
+        .where(Square.room_id == room_id, Square.owner_id == user_id)
+    )
+    claimed = {r["index"] for r in rows}
+    for pattern in WIN_PATTERNS:
+        if set(pattern).issubset(claimed):
+            return pattern
+    return None
+
 @router.post("/{room_id}/squares/{square_index}/claim", response_model=ClaimSquareResponse)
 async def claim_square(room_id: int, square_index: int, payload: ClaimSquareRequest):
-    # verify room
+    # verify room exists
     room = await database.fetch_one(select(Room).where(Room.id == room_id))
     if not room:
         raise HTTPException(404, "Pokój nie istnieje")
 
-    # fetch the square by index
+    # optional: block further claims if already won
+    if room["winner_id"] is not None:
+        raise HTTPException(409, "Gra zakończona")
+
+    # find the square
     sq = await database.fetch_one(
         select(Square).where(
             Square.room_id == room_id,
@@ -131,7 +169,6 @@ async def claim_square(room_id: int, square_index: int, payload: ClaimSquareRequ
     )
     if not sq:
         raise HTTPException(404, "Kwadrat nie istnieje")
-
     if sq["owner_id"] is not None:
         raise HTTPException(409, "Kwadrat już zajęty")
 
@@ -149,9 +186,44 @@ async def claim_square(room_id: int, square_index: int, payload: ClaimSquareRequ
     if not user:
         raise HTTPException(404, "Użytkownik nie istnieje")
 
+    # run win-check
+    winning_pattern = await check_win(room_id, payload.user_id)
+    if winning_pattern:
+        # persist winner
+        await database.execute(
+            update(Room)
+            .where(Room.id == room_id)
+            .values(winner_id=payload.user_id)
+        )
+        win = True
+    else:
+        win = False
+
     return ClaimSquareResponse(
         id=sq["id"],
         index=sq["index"],
         owner_id=payload.user_id,
         color=user["color"],
+        win=win,
+        winning_indices=winning_pattern,
     )
+
+    
+@router.get("/{room_id}", response_model=RoomDetail)
+async def get_room(room_id: int):
+    # build an OUTER JOIN from rooms → users on winner_id
+    room_user_join = outerjoin(Room, User, Room.winner_id == User.id)
+    query = (
+        select(
+            Room.id,
+            Room.name,
+            Room.winner_id,
+            User.color.label("winner_color"),
+        )
+        .select_from(room_user_join)
+        .where(Room.id == room_id)
+    )
+    room = await database.fetch_one(query)
+    if not room:
+        raise HTTPException(404, "Pokój nie istnieje")
+    return RoomDetail(**room)

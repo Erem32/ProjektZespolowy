@@ -42,8 +42,9 @@ class ClaimSquareResponse(BaseModel):
     index: int
     owner_id: Optional[int]
     color: Optional[str]
-
     model_config = ConfigDict(from_attributes=True)
+    win: bool                                      
+    winning_indices: Optional[List[int]] = None 
 
 class SquareOut(BaseModel):
     id: int
@@ -51,4 +52,10 @@ class SquareOut(BaseModel):
     owner_id: Optional[int]
     color: Optional[str]
 
+    model_config = ConfigDict(from_attributes=True)
+class RoomDetail(BaseModel):
+    id: int
+    name: str
+    winner_id: Optional[int]          # nullable FK to users.id
+    winner_color: Optional[str]       # the color of the winner (if any)
     model_config = ConfigDict(from_attributes=True)
