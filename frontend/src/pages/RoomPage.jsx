@@ -1,47 +1,52 @@
-// src/pages/RoomPage.jsx  :contentReference[oaicite:0]{index=0}
-
+// src/pages/RoomPage.jsx
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import './RoomPage.css';
 
 export default function RoomPage({ userId }) {
   const { id: roomId } = useParams();
+  const navigate = useNavigate();
+
   const [squares, setSquares] = useState([]);
   const [winner, setWinner] = useState(null);
   const [error, setError] = useState('');
 
-  // fetch both squares + room info
+  // Fetch both squares and room info (including winner_name)
+  const loadRoom = async () => {
+    try {
+      const [sqRes, roomRes] = await Promise.all([
+        api.get(`/rooms/${roomId}/squares`),
+        api.get(`/rooms/${roomId}`), // musi zawierać winner_name
+      ]);
+      setSquares(sqRes.data);
+      setWinner(roomRes.data);
+    } catch (e) {
+      console.error(e);
+      setError('Nie udało się załadować pokoju.');
+    }
+  };
+
   useEffect(() => {
-    Promise.all([api.get(`/rooms/${roomId}/squares`), api.get(`/rooms/${roomId}`)])
-      .then(([sqRes, roomRes]) => {
-        setSquares(sqRes.data);
-        setWinner(roomRes.data); // { id, name, winner_id, winner_color }
-      })
-      .catch((e) => {
-        console.error(e);
-        setError('Nie udało się załadować pokoju.');
-      });
+    loadRoom();
   }, [roomId]);
 
   const handleClick = async (sq) => {
-    if (sq.owner_id || winner?.winner_id) return; // block clicks if already won
+    if (sq.owner_id || winner?.winner_id) return;
     try {
       const res = await api.post(`/rooms/${roomId}/squares/${sq.index}/claim`, {
         user_id: Number(userId),
       });
+      // Aktualizuj planszę
       setSquares((prev) =>
         prev.map((s) =>
           s.id === res.data.id ? { ...s, owner_id: res.data.owner_id, color: res.data.color } : s
         )
       );
-      // if this claim just won, update our modal state too
+      // Jeśli to zwycięski ruch, przeładuj room, żeby pobrać winner_name
       if (res.data.win) {
-        setWinner({
-          ...winner,
-          winner_id: res.data.owner_id,
-          winner_color: res.data.color,
-        });
+        const roomRes = await api.get(`/rooms/${roomId}`);
+        setWinner(roomRes.data);
       }
     } catch (e) {
       console.error(e);
@@ -49,8 +54,25 @@ export default function RoomPage({ userId }) {
     }
   };
 
+  const goBack = () => navigate('/dashboard');
+
   return (
     <div className="room-container">
+      <button
+        onClick={goBack}
+        style={{
+          marginBottom: '1rem',
+          padding: '0.5rem 1rem',
+          backgroundColor: '#2980b9',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+        }}
+      >
+        ← Powrót do dashboard
+      </button>
+
       <h1 className="room-title">Pokój #{roomId}</h1>
       {error && <div className="error-message">{error}</div>}
 
@@ -73,14 +95,13 @@ export default function RoomPage({ userId }) {
         </div>
       </div>
 
-      {/* permanent modal if someone’s already won */}
       {winner?.winner_id && (
         <div className="modal-overlay">
           <div className="modal">
             <h2>🏆 Mamy zwycięzcę!</h2>
             <div className="winner-color-block" style={{ background: winner.winner_color }} />
             <p>
-              Gracz koloru <strong>{winner.winner_color}</strong> wygrał tę grę.
+              Gracz <strong>{winner.winner_name}</strong> wygrał tę grę.
             </p>
           </div>
         </div>

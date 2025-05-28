@@ -20,6 +20,7 @@ export default function LoginPage() {
 
       // Zapisz userId (konieczne do join room) i ewentualnie token
       localStorage.setItem('userId', user.id);
+      localStorage.setItem('username', user.email);
       // Jeśli masz też token zwracany:
       if (response.data.access_token) {
         localStorage.setItem('accessToken', response.data.access_token);

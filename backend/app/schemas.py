@@ -59,3 +59,4 @@ class RoomDetail(BaseModel):
     winner_id: Optional[int]          # nullable FK to users.id
     winner_color: Optional[str]       # the color of the winner (if any)
     model_config = ConfigDict(from_attributes=True)
+    winner_name: Optional[str] 

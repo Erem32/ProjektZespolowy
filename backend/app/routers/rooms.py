@@ -219,6 +219,7 @@ async def get_room(room_id: int):
             Room.name,
             Room.winner_id,
             User.color.label("winner_color"),
+            User.email.label("winner_name"),
         )
         .select_from(room_user_join)
         .where(Room.id == room_id)
