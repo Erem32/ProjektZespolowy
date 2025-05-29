@@ -1,28 +1,28 @@
-// src/pages/RoomPage.jsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../api';
 import './RoomPage.css';
 
-export default function RoomPage({ userId }) {
+export default function RoomPage() {
   const { id: roomId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth(); // ← zawsze aktualny
+  const userId = user?.id;
 
   const [squares, setSquares] = useState([]);
   const [winner, setWinner] = useState(null);
   const [error, setError] = useState('');
 
-  // Fetch both squares and room info (including winner_name)
   const loadRoom = async () => {
     try {
       const [sqRes, roomRes] = await Promise.all([
         api.get(`/rooms/${roomId}/squares`),
-        api.get(`/rooms/${roomId}`), // musi zawierać winner_name
+        api.get(`/rooms/${roomId}`),
       ]);
       setSquares(sqRes.data);
       setWinner(roomRes.data);
-    } catch (e) {
-      console.error(e);
+    } catch {
       setError('Nie udało się załadować pokoju.');
     }
   };
@@ -31,42 +31,37 @@ export default function RoomPage({ userId }) {
     loadRoom();
   }, [roomId]);
 
-  const handleClick = async (sq) => {
+  const claim = async (sq) => {
     if (sq.owner_id || winner?.winner_id) return;
     try {
-      const res = await api.post(`/rooms/${roomId}/squares/${sq.index}/claim`, {
-        user_id: Number(userId),
-      });
-      // Aktualizuj planszę
+      const res = await api.post(`/rooms/${roomId}/squares/${sq.index}/claim`, { user_id: userId });
+
       setSquares((prev) =>
         prev.map((s) =>
           s.id === res.data.id ? { ...s, owner_id: res.data.owner_id, color: res.data.color } : s
         )
       );
-      // Jeśli to zwycięski ruch, przeładuj room, żeby pobrać winner_name
+
       if (res.data.win) {
         const roomRes = await api.get(`/rooms/${roomId}`);
         setWinner(roomRes.data);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
       setError('Nie udało się zarezerwować pola.');
     }
   };
 
-  const goBack = () => navigate('/dashboard');
-
   return (
     <div className="room-container">
       <button
-        onClick={goBack}
+        onClick={() => navigate('/dashboard')}
         style={{
           marginBottom: '1rem',
           padding: '0.5rem 1rem',
-          backgroundColor: '#2980b9',
+          background: '#2980b9',
           color: '#fff',
           border: 'none',
-          borderRadius: '4px',
+          borderRadius: 4,
           cursor: 'pointer',
         }}
       >
@@ -79,16 +74,15 @@ export default function RoomPage({ userId }) {
       <div className="board-wrapper">
         <div className="bingo-board">
           {squares.map((sq) => {
-            const isFree = !sq.owner_id;
-            const cellClass = isFree ? 'cell free' : 'cell taken';
+            const free = !sq.owner_id;
             return (
               <div
                 key={sq.id}
-                className={cellClass}
-                style={sq.color && !isFree ? { background: sq.color } : {}}
-                onClick={() => isFree && handleClick(sq)}
+                className={free ? 'cell free' : 'cell taken'}
+                style={sq.color && !free ? { background: sq.color } : {}}
+                onClick={() => free && claim(sq)}
               >
-                {isFree ? sq.index + 1 : ''}
+                {free ? sq.index + 1 : ''}
               </div>
             );
           })}

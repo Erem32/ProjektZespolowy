@@ -1,23 +1,24 @@
 // src/pages/DashboardPage.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import PasswordModal from '../components/PasswordModal';
 import './DashboardPage.css';
 
 export default function DashboardPage({ userId }) {
+  // stan widoku
   const [rooms, setRooms] = useState([]);
   const [filter, setFilter] = useState('');
   const [selectedRoom, setSelectedRoom] = useState(null);
+
   const navigate = useNavigate();
+  const { user, logout } = useAuth(); // aktualny user z kontekstu
 
-  // --- DODANE: pobranie nazwy użytkownika i handler wylogowania ---
-  const username = localStorage.getItem('username');
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
-  // ----------------------------------------------------------------
+  // ID i email – preferuj Context, a gdyby go nie było (stary kod) użyj localStorage
+  const currentUserId = user?.id ?? userId;
+  const username = user?.email ?? localStorage.getItem('username');
 
+  // pobieranie listy pokoi
   useEffect(() => {
     fetch('/rooms')
       .then((res) => res.json())
@@ -25,10 +26,13 @@ export default function DashboardPage({ userId }) {
       .catch(console.error);
   }, []);
 
+  // filtrowanie
   const filteredRooms = rooms.filter((r) => r.name.toLowerCase().includes(filter.toLowerCase()));
 
+  // modal z hasłem
   const openModal = (room) => setSelectedRoom(room);
   const closeModal = () => setSelectedRoom(null);
+
   const onJoinSuccess = (color) => {
     localStorage.setItem('userColor', color);
     closeModal();
@@ -37,7 +41,7 @@ export default function DashboardPage({ userId }) {
 
   return (
     <>
-      {/* Pasek wylogowania i nazwa użytkownika */}
+      {/* Pasek górny */}
       <div
         style={{
           position: 'fixed',
@@ -54,8 +58,12 @@ export default function DashboardPage({ userId }) {
         <span style={{ marginRight: '1rem' }}>
           Zalogowany jako: <strong>{username}</strong>
         </span>
+
         <button
-          onClick={handleLogout}
+          onClick={() => {
+            logout(); // wyczyść Context + localStorage
+            navigate('/login'); // powrót do ekranu logowania
+          }}
           style={{
             padding: '0.25rem 0.5rem',
             backgroundColor: '#e74c3c',
@@ -69,7 +77,7 @@ export default function DashboardPage({ userId }) {
         </button>
       </div>
 
-      {/* Oryginalna zawartość dashboardu, z offsetem by nie zasłaniać headera */}
+      {/* Zawartość dashboardu */}
       <div className="dashboard-container" style={{ paddingTop: '4rem' }}>
         <div className="dashboard-header">
           <h1 className="dashboard-title">Dashboard – lista pokoi</h1>
@@ -101,7 +109,7 @@ export default function DashboardPage({ userId }) {
         {selectedRoom && (
           <PasswordModal
             room={selectedRoom}
-            userId={userId}
+            userId={currentUserId} // zawsze świeże ID
             onCancel={closeModal}
             onSuccess={onJoinSuccess}
           />
