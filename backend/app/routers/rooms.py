@@ -3,7 +3,8 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, insert, update
 from app.database import database
-from app.models import Room, User, Square
+from app.models import Room, User, Square,Challenge
+
 from app.schemas import (
     RoomCreate,
     RoomOut,
@@ -35,25 +36,39 @@ def pick_random_color() -> str:
 @router.post("", response_model=RoomOut)
 async def create_room(payload: RoomCreate):
     """
-    Tworzy nowy pokój z nazwą i hasłem, 
-    a następnie generuje 25 pustych pól do gry.
+    Tworzy nowy pokój z nazwą, hasłem i kategorią,
+    a następnie wypełnia planszę 25 losowymi wyzwaniami z danej kategorii.
     """
+    # 1) Create room with category
     hashed = hash_pw(payload.password)
-    # 1) Create the room
-    result = await database.execute(insert(Room).values(
-        name=payload.name, password=hashed
-    ))
+    result = await database.execute(
+        insert(Room).values(
+            name=payload.name,
+            password=hashed,
+            category=payload.category    # NEW: category column on Room
+            
+        )
+    )
     room_id = int(result)
 
-    # 2) Generate a 5×5 board: squares with indexes 0..24
-    squares_to_insert = [
-        {"room_id": room_id, "index": idx, "owner_id": None}
-        for idx in range(25)
-    ]
-    await database.execute_many(
-        insert(Square),
-        squares_to_insert
+    # 2) Fetch all challenges for that category, shuffle and pick 25
+    all_chals = await database.fetch_all(
+        select(Challenge).where(Challenge.category == payload.category)
     )
+    random.shuffle(all_chals)
+    selected = all_chals[:25]
+
+    # 3) Insert each as a square with its text
+    squares_to_insert = [
+        {
+            "room_id": room_id,
+            "index": idx,
+            "owner_id": None,
+            "text": selected[idx]["text"]   # NEW: text column on Square
+        }
+        for idx in range(len(selected))
+    ]
+    await database.execute_many(insert(Square), squares_to_insert)
 
     return RoomOut(id=room_id, name=payload.name)
 
@@ -99,7 +114,8 @@ async def list_squares(room_id: int):
             Square.id,
             Square.index,
             Square.owner_id,
-            User.color
+            User.color,
+            Square.text  
         )
         .select_from(Square)                                # from squares
         .outerjoin(User, Square.owner_id == User.id)       # left join users
@@ -113,6 +129,7 @@ async def list_squares(room_id: int):
             index=r["index"],
             owner_id=r["owner_id"],
             color=r["color"],
+             text     = r["text"],    
         )
         for r in rows
     ]

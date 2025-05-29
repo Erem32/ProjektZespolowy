@@ -82,7 +82,7 @@ export default function RoomPage() {
                 style={sq.color && !free ? { background: sq.color } : {}}
                 onClick={() => free && claim(sq)}
               >
-                {free ? sq.index + 1 : ''}
+                {sq.text}
               </div>
             );
           })}

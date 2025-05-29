@@ -6,6 +6,7 @@ import './CreateRoomPage.css';
 export default function CreateRoomPage() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [category, setCategory] = useState('gym/fitness'); // NEW
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -16,7 +17,7 @@ export default function CreateRoomPage() {
       const res = await fetch('/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, password }),
+        body: JSON.stringify({ name, password, category }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -51,6 +52,13 @@ export default function CreateRoomPage() {
             required
             placeholder="Wpisz hasło"
           />
+        </div>
+        <div className="form-group">
+          <label>Kategoria</label>
+          <select value={category} onChange={(e) => setCategory(e.target.value)} required>
+            <option value="gym/fitness">Gym / Fitness</option>
+            <option value="sightseeing">Sightseeing</option>
+          </select>
         </div>
         {error && <div className="create-room-error">{error}</div>}
         <button type="submit" className="btn-create-room">

@@ -20,6 +20,7 @@ class LoginRequest(BaseModel):
 class RoomCreate(BaseModel):
     name: str
     password: str
+    category: str   # NEW: must be "gym/fitness" or "sightseeing"
 
 class RoomOut(BaseModel):
     id: int
@@ -51,6 +52,7 @@ class SquareOut(BaseModel):
     index: int
     owner_id: Optional[int]
     color: Optional[str]
+    text: str   # the challenge description
 
     model_config = ConfigDict(from_attributes=True)
 class RoomDetail(BaseModel):
