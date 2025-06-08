@@ -15,7 +15,7 @@ Po zalogowaniu wklej:
 ```sql
 -- user and database setup
 CREATE USER bingouser WITH PASSWORD 'bingopw';
-CREATE DATABASE bingo;
+CREATE DATABASE bingo ENCODING = 'UTF8';
 GRANT ALL PRIVILEGES ON DATABASE bingo TO bingouser;
 \c bingo
 -- table setup
@@ -25,30 +25,34 @@ CREATE TABLE challenges (
     text     TEXT    NOT NULL
 );
 CREATE TABLE users (
-	id INTEGER NOT NULL, 
-	email VARCHAR, 
-	hashed_password VARCHAR, color TEXT, 
-	PRIMARY KEY (id)
+    id SERIAL PRIMARY KEY,
+    email VARCHAR NOT NULL UNIQUE,
+    hashed_password VARCHAR NOT NULL,
+    color VARCHAR
 );
 CREATE TABLE rooms (
-	id INTEGER NOT NULL, 
-	name VARCHAR, password TEXT NOT NULL DEFAULT '', winner_id INTEGER, category TEXT NOT NULL DEFAULT 'gym/fitness', 
-	PRIMARY KEY (id)
+    id SERIAL PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    password TEXT NOT NULL DEFAULT '',
+    winner_id INTEGER REFERENCES users(id),
+    category TEXT NOT NULL DEFAULT 'gym/fitness'
 );
 CREATE TABLE squares (
-	id INTEGER NOT NULL, 
-	room_id INTEGER, 
-	"index" INTEGER, 
-	owner_id INTEGER, text      TEXT, 
-	PRIMARY KEY (id), 
-	FOREIGN KEY(room_id) REFERENCES rooms (id), 
-	FOREIGN KEY(owner_id) REFERENCES users (id)
+    id SERIAL PRIMARY KEY,
+    room_id INTEGER NOT NULL REFERENCES rooms(id),
+    index INTEGER NOT NULL,
+    owner_id INTEGER REFERENCES users(id),
+    text TEXT NOT NULL
 );
 -- grant privileges per each table (backend doesn't work without it)
 GRANT ALL PRIVILEGES ON TABLE rooms TO bingouser;
 GRANT ALL PRIVILEGES ON TABLE users TO bingouser;
 GRANT ALL PRIVILEGES ON TABLE challenges TO bingouser;
 GRANT ALL PRIVILEGES ON TABLE squares TO bingouser;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE users_id_seq TO bingouser;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE rooms_id_seq TO bingouser;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE squares_id_seq TO bingouser;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE challenges_id_seq TO bingouser;
 -- populate table challenges
 INSERT INTO challenges ("id", "category", "text") VALUES
 (1, 'gym/fitness', 'Do 10 push-ups'),
@@ -99,7 +103,8 @@ INSERT INTO challenges ("id", "category", "text") VALUES
 (46, 'sightseeing', 'Visit a historic monument'),
 (47, 'sightseeing', 'Take a guided walking tour'),
 (48, 'sightseeing', 'Capture a nighttime cityscape'),
-(49, 'sightseeing', 'Find a public sculpture');
+(49, 'sightseeing', 'Find a public sculpture'),
+(50, 'sightseeing', 'Photograph the sunrise');
 -- populate table users
 INSERT INTO users ("id", "email", "hashed_password", "color") VALUES
 (1, 'xmichalmajkix@wp.pl', '1b7c4862802f894d7c079550ab7d1aa58dc9e92d60216a234680603398f719e6', '#f58231'),
@@ -1066,5 +1071,10 @@ INSERT INTO squares ("id", "room_id", "index", "owner_id", "text") VALUES
 (897, 42, 22, NULL, '5-minute yoga stretch'),
 (898, 42, 23, NULL, 'Jump rope for 2 minutes'),
 (899, 42, 24, 19, '20 Russian twists');
+-- set PostgreSQL sequences to prevent duplicate key error (prevented registration from working properly)
+SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
+SELECT setval('rooms_id_seq', (SELECT MAX(id) FROM rooms));
+SELECT setval('squares_id_seq', (SELECT MAX(id) FROM squares));
+SELECT setval('challenges_id_seq', (SELECT MAX(id) FROM challenges));
 
 ```
