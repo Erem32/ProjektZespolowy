@@ -10,7 +10,11 @@ from app import models
 from fastapi import FastAPI
 from app.database import database
 from app.routers import rooms
+from app.routers import chat
+from fastapi.staticfiles import StaticFiles
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 @app.on_event("startup")
 async def startup():
@@ -52,6 +56,8 @@ app.add_middleware(
 app.include_router(register.router)
 app.include_router(login.router)
 app.include_router(rooms.router)
+app.include_router(chat.router)
+
 @app.get("/ping")
 async def ping():
     return{"message":"pong"}

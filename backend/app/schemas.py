@@ -1,5 +1,6 @@
 from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, EmailStr
+from datetime import datetime
 
 class RegisterRequest(BaseModel):
     name: str
@@ -62,3 +63,28 @@ class RoomDetail(BaseModel):
     winner_color: Optional[str]       # the color of the winner (if any)
     model_config = ConfigDict(from_attributes=True)
     winner_name: Optional[str] 
+
+class ChatMessageBase(BaseModel):
+    text: Optional[str] = None
+    image_path: Optional[str] = None
+    square_index: Optional[int] = None
+
+class ChatMessageCreate(ChatMessageBase):
+    user_id: int
+    room_id: int
+    square_index: Optional[int] = None
+
+class ChatMessageRead(BaseModel):
+    id: int
+    room_id: int
+    user_id: int
+    text: Optional[str]
+    image_path: Optional[str]
+    status: str
+    created_at: datetime
+    square_index: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ChatMessageUpdate(BaseModel):
+    status: str  # oczekiwane: "pending", "approved" lub "rejected"

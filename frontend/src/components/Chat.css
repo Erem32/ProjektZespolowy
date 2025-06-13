@@ -1,0 +1,45 @@
+/* frontend/src/components/Chat.css */
+.chat {
+  margin-top: 1rem;
+  border: 1px solid #ddd;
+  padding: 1rem;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+}
+.chat-info {
+  margin-bottom: 0.5rem;
+  font-style: italic;
+}
+.messages {
+  flex: 1;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+.msg {
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+.msg-square {
+  font-size: 0.85rem;
+  color: #666;
+}
+.actions {
+  margin-top: 0.5rem;
+}
+.actions button {
+  margin-right: 0.5rem;
+}
+.chat-form {
+  display: flex;
+  align-items: center;
+}
+.chat-form input {
+  flex: 1;
+  margin-right: 0.5rem;
+}
+.error {
+  color: red;
+  margin-top: 0.5rem;
+}

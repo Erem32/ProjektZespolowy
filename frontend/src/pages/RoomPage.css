@@ -2,10 +2,9 @@
 
 .room-container {
   padding: 2rem 1rem;
-  padding: 2rem 1rem;
-  max-width: 1000px; /* ↑ was 600px—make room for bigger board */
+  max-width: 1000px;
   margin: 0 auto;
-  text-align: center;
+  text-align: left; /* zamiast center */
 }
 
 .room-title {
@@ -20,43 +19,46 @@
   font-weight: bold;
 }
 
-/* wrapper żeby ograniczyć szerokość planszy */
-.board-wrapper {
+/* główny flex: plansza + chat */
+.room-content {
   display: flex;
-  justify-content: center;
+  gap: 1rem;
+  align-items: flex-start; /* wyrównanie do góry */
+  justify-content: space-between; /* rozsuwa board i chat */
+}
+
+/* wrapper żeby ograniczyć szerokość planszy */
+.room-content .board-wrapper {
+  flex: 3;
+  display: flex;
+  justify-content: flex-start; /* wyrównanie planszy do lewej */
   padding: 1rem;
   background: #ecf0f1;
   border-radius: 12px;
 }
 
+/* plansza bingo */
 .bingo-board {
   display: grid;
-  /* make each cell 180×180px (≈3× the old 60px) */
   grid-template-columns: repeat(5, 180px);
   grid-auto-rows: 180px;
   gap: 1rem;
-  justify-content: center;
+  /* justify-content: center; usunięte */
 }
 
 /* style komórek */
 .bingo-board .cell {
-  /* fill the 180×180px grid cell */
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-
-  /* center contents via flex instead of line-height */
   display: flex;
   align-items: center;
   justify-content: center;
-  /* smaller, wrapped text */
   padding: 8px;
   font-size: 0.75rem;
   line-height: 1.2;
   text-align: center;
   word-break: break-word;
-
-  /* retain your existing look */
   font-weight: 600;
   color: #2c3e50;
   border: 2px solid #2980b9;
@@ -73,11 +75,16 @@
   background: #3498db;
   color: #fff;
 }
-
 .bingo-board .cell.taken {
   background: #2980b9;
   color: #ecf0f1;
   cursor: default;
+}
+
+/* panel czatu po prawej */
+.room-content .chat-wrapper {
+  flex: 1;
+  max-width: 400px;
 }
 
 /* full‐screen semi‐transparent backdrop */
@@ -93,7 +100,8 @@
   justify-content: center;
   z-index: 999;
 }
-/* the white box */
+
+/* okno zwycięzcy */
 .modal {
   background: #fff;
   padding: 2rem;
