@@ -36,6 +36,11 @@
   background: #ecf0f1;
   border-radius: 12px;
 }
+/* lighter shade for pending proof */
+.bingo-board .cell.pending {
+  border-color: #ccc;
+  /* opacity and background are set inline */
+}
 
 /* plansza bingo */
 .bingo-board {

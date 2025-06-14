@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../api';
 import './Chat.css';
 
-export default function Chat({ roomId, userId, squareIndex }) {
+export default function Chat({ roomId, userId, squareIndex, onApprove, onSendProof }) {
   const [msgs, setMsgs] = useState([]);
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
@@ -46,6 +46,7 @@ export default function Chat({ roomId, userId, squareIndex }) {
       });
       setFile(null);
       load();
+      if (onSendProof) onSendProof(); // immediately refresh pending on board
     } catch (e) {
       console.error('Błąd wysyłania dowodu:', e);
       setError('Nie udało się wysłać dowodu.');
@@ -56,6 +57,7 @@ export default function Chat({ roomId, userId, squareIndex }) {
     try {
       await api.patch(`/rooms/${roomId}/messages/${id}`, { status });
       load();
+      if (status === 'approved' && onApprove) onApprove();
     } catch (e) {
       console.error('Błąd weryfikacji dowodu:', e);
     }

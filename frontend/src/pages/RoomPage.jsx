@@ -16,7 +16,7 @@ export default function RoomPage() {
   const [winner, setWinner] = useState(null);
   const [error, setError] = useState('');
   const [chatSquare, setChatSquare] = useState(null);
-
+  const [pending, setPending] = useState({}); // map index → color
   const loadRoom = async () => {
     try {
       const [sqRes, roomRes] = await Promise.all([
@@ -29,9 +29,26 @@ export default function RoomPage() {
       setError('Nie udało się załadować pokoju.');
     }
   };
-
+  const loadPending = async () => {
+    // fetch ALL pending proofs, now including user_color
+    const res = await api.get(`/rooms/${roomId}/messages?status=pending`);
+    // build a map: square_index → user_color
+    const map = {};
+    res.data.forEach((m) => {
+      if (m.square_index != null) map[m.square_index] = m.user_color;
+    });
+    setPending(map);
+  };
   useEffect(() => {
     loadRoom();
+    loadPending();
+    // every 5s, refresh both board state and pending proofs
+    const refreshId = setInterval(() => {
+      loadRoom();
+      loadPending();
+    }, 5000);
+    // cleanup on unmount or room change
+    return () => clearInterval(refreshId);
   }, [roomId]);
 
   return (
@@ -48,11 +65,19 @@ export default function RoomPage() {
           <div className="bingo-board">
             {squares.map((sq) => {
               const free = !sq.owner_id;
+              const lightColor = pending[sq.index];
+              const isPending = free && Boolean(lightColor);
+
               return (
                 <div
-                  key={sq.id}
-                  className={free ? 'cell free' : 'cell taken'}
-                  style={sq.color && !free ? { background: sq.color } : {}}
+                  className={isPending ? 'cell pending' : free ? 'cell free' : 'cell taken'}
+                  style={
+                    isPending
+                      ? { background: lightColor, opacity: 0.5, cursor: 'default' }
+                      : sq.color && !free
+                        ? { background: sq.color }
+                        : {}
+                  }
                   onClick={() => free && setChatSquare(sq.index)}
                 >
                   {sq.text}
@@ -63,7 +88,17 @@ export default function RoomPage() {
         </div>
 
         <div className="chat-wrapper">
-          <Chat roomId={roomId} userId={userId} squareIndex={chatSquare} />
+          +{' '}
+          <Chat
+            roomId={roomId}
+            userId={userId}
+            squareIndex={chatSquare}
+            onApprove={() => {
+              loadRoom();
+              loadPending();
+            }}
+            onSendProof={() => loadPending()}
+          />
         </div>
       </div>
 

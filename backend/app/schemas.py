@@ -78,13 +78,14 @@ class ChatMessageRead(BaseModel):
     id: int
     room_id: int
     user_id: int
-    text: Optional[str]
-    image_path: Optional[str]
+    text: Optional[str] = None
+    image_path: Optional[str] = None
     status: str
-    created_at: datetime
     square_index: Optional[int] = None
 
+    user_color: Optional[str]          
     model_config = ConfigDict(from_attributes=True)
+
 
 class ChatMessageUpdate(BaseModel):
     status: str  # oczekiwane: "pending", "approved" lub "rejected"

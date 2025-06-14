@@ -54,18 +54,39 @@ async def send_message(
         )
         .returning(ChatMessage)
     )
+#
     record = await database.fetch_one(insert_stmt)
-    return ChatMessageRead.from_orm(record)
 
+
+    return ChatMessageRead(
+        id=record["id"],
+        room_id=record["room_id"],
+        user_id=record["user_id"],
+        text=record["text"],
+        image_path=record["image_path"],
+        status=record["status"],
+        square_index=record["square_index"],
+        user_color=user["color"],     
+    )
 
 @router.get("/", response_model=list[ChatMessageRead])
 async def list_messages(room_id: int, status: str | None = None):
-    q = select(ChatMessage).where(ChatMessage.room_id == room_id)
+    # join ChatMessage → User to pull in their color
+    stmt = (
+        select(ChatMessage, User.color.label("user_color"))
+        .join(User, ChatMessage.user_id == User.id)
+        .where(ChatMessage.room_id == room_id)
+    )
     if status:
-        q = q.where(ChatMessage.status == status)
-    q = q.order_by(ChatMessage.created_at)
-    rows = await database.fetch_all(q)
-    return [ChatMessageRead.from_orm(r) for r in rows]
+        stmt = stmt.where(ChatMessage.status == status)
+    stmt = stmt.order_by(ChatMessage.created_at)
+
+    rows = await database.fetch_all(stmt)
+    return [
+        # combine the row dict with the extra user_color field
+        ChatMessageRead.from_orm({**row, "user_color": row["user_color"]})
+        for row in rows
+    ]
 
 
 @router.patch("/{message_id}", response_model=ChatMessageRead)
@@ -93,6 +114,16 @@ async def update_message_status(
     )
     updated = await database.fetch_one(upd_stmt)
 
+# 2a) claim square + win-check (unchanged) …
+
+# 2b) now grab the author’s color
+    user = await database.fetch_one(
+    select(User.color).where(User.id == updated["user_id"])
+)
+
+# 2c) return with user_color
+
+
     # 3) jeśli zatwierdzono i wiadomość miała przypisany square_index → claim pola
     if payload.status == "approved" and updated["square_index"] is not None:
         # oznacz pole w tabeli squares
@@ -114,4 +145,14 @@ async def update_message_status(
                 .values(winner_id=updated["user_id"])
             )
 
-    return ChatMessageRead.from_orm(updated)
+    return ChatMessageRead(
+    id=updated["id"],
+    room_id=updated["room_id"],
+    user_id=updated["user_id"],
+    text=updated["text"],
+    image_path=updated["image_path"],
+    status=updated["status"],
+    square_index=updated["square_index"],
+    user_color=user["color"],
+)
+
