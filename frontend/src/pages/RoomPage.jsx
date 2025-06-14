@@ -13,54 +13,71 @@ export default function RoomPage() {
   const userId = user?.id;
 
   const [squares, setSquares] = useState([]);
-  const [winner, setWinner] = useState(null);
+  const [roomDetail, setRoomDetail] = useState(null);
   const [error, setError] = useState('');
   const [chatSquare, setChatSquare] = useState(null);
-  const [pending, setPending] = useState({}); // map index → color
+  const [pending, setPending] = useState({});
+
   const loadRoom = async () => {
     try {
-      const [sqRes, roomRes] = await Promise.all([
+      const [sqRes, detRes] = await Promise.all([
         api.get(`/rooms/${roomId}/squares`),
         api.get(`/rooms/${roomId}`),
       ]);
       setSquares(sqRes.data);
-      setWinner(roomRes.data);
+      setRoomDetail(detRes.data);
     } catch {
       setError('Nie udało się załadować pokoju.');
     }
   };
+
   const loadPending = async () => {
-    // fetch ALL pending proofs, now including user_color
-    const res = await api.get(`/rooms/${roomId}/messages?status=pending`);
-    // build a map: square_index → user_color
-    const map = {};
-    res.data.forEach((m) => {
-      if (m.square_index != null) map[m.square_index] = m.user_color;
-    });
-    setPending(map);
+    try {
+      const res = await api.get(`/rooms/${roomId}/messages?status=pending`);
+      const map = {};
+      res.data.forEach((m) => {
+        if (m.square_index != null) map[m.square_index] = m.user_color;
+      });
+      setPending(map);
+    } catch {}
   };
+
   useEffect(() => {
     loadRoom();
     loadPending();
-    // every 5s, refresh both board state and pending proofs
-    const refreshId = setInterval(() => {
+    const iv = setInterval(() => {
       loadRoom();
       loadPending();
     }, 5000);
-    // cleanup on unmount or room change
-    return () => clearInterval(refreshId);
+    return () => clearInterval(iv);
   }, [roomId]);
 
   return (
     <div className="room-container">
-      <button onClick={() => navigate('/dashboard')} className="back-button">
-        ← Powrót
-      </button>
+      <div className="room-header">
+        <button onClick={() => navigate('/dashboard')} className="back-button">
+          ← Powrót
+        </button>
+        <h1 className="room-title">Pokój #{roomId}</h1>
+      </div>
 
-      <h1 className="room-title">Pokój #{roomId}</h1>
       {error && <div className="error-message">{error}</div>}
 
       <div className="room-content">
+        {/* ← Sidebar */}
+        <aside className="players-sidebar">
+          <h2>Gracze: {roomDetail?.players_count}/4</h2>
+          <ul>
+            {roomDetail?.players.map((p) => (
+              <li key={p.id}>
+                <span className="player-color-block" style={{ background: p.color }} />
+                {p.email}
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        {/* ← Bingo board */}
         <div className="board-wrapper">
           <div className="bingo-board">
             {squares.map((sq) => {
@@ -70,6 +87,7 @@ export default function RoomPage() {
 
               return (
                 <div
+                  key={sq.id}
                   className={isPending ? 'cell pending' : free ? 'cell free' : 'cell taken'}
                   style={
                     isPending
@@ -87,8 +105,8 @@ export default function RoomPage() {
           </div>
         </div>
 
+        {/* ← Chat panel */}
         <div className="chat-wrapper">
-          +{' '}
           <Chat
             roomId={roomId}
             userId={userId}
@@ -102,13 +120,13 @@ export default function RoomPage() {
         </div>
       </div>
 
-      {winner?.winner_id && (
+      {roomDetail?.winner_id && (
         <div className="modal-overlay">
           <div className="modal">
             <h2>🏆 Mamy zwycięzcę!</h2>
-            <div className="winner-color-block" style={{ background: winner.winner_color }} />
+            <div className="winner-color-block" style={{ background: roomDetail.winner_color }} />
             <p>
-              Gracz <strong>{winner.winner_name}</strong> wygrał grę.
+              Gracz <strong>{roomDetail.winner_name}</strong> wygrał grę.
             </p>
           </div>
         </div>

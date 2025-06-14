@@ -122,3 +122,71 @@
   border: 2px solid #333;
   border-radius: 4px;
 }
+
+.room-content {
+  display: flex;
+  gap: 20px;
+}
+
+.players-sidebar {
+  width: 180px;
+}
+.players-sidebar h3 {
+  margin-top: 0;
+}
+.players-sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.players-sidebar li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.player-color-block {
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  border-radius: 2px;
+}
+
+/* adjust board/chat sizes if needed */
+.board-wrapper {
+  flex: 1 1 auto;
+}
+.chat-wrapper {
+  width: 300px;
+}
+/* 1) Make room‐content a positioning context and center the board */
+.room-content {
+  position: relative;
+  /* no justify-content here — we’ll center the board itself */
+}
+
+/* 2) Fix the board wrapper to the exact grid width & center it */
+.board-wrapper {
+  width: calc(5 * 180px + 4 * 1rem); /* 5 cells + 4 gaps */
+  margin: 0 auto; /* centers it in the viewport */
+}
+
+/* 3) Pin the players sidebar to the left of the now-centered board */
+.players-sidebar {
+  position: absolute;
+  top: 0;
+  left: calc(
+    50% /* center of container */ - (5 * 180px + 4 * 1rem) / 2 /* half the board width */ - 1rem
+      /* your gap */ - 200px
+  ); /* sidebar width */
+  /* (we’re assuming .players-sidebar { width:200px } already) */
+}
+
+/* 4) Pin the chat panel to the right of the board */
+.chat-wrapper {
+  position: absolute;
+  top: 0;
+  left: calc(
+    50% /* center */ + (5 * 180px + 4 * 1rem) / 2 /* half the board */ + 1rem
+  ); /* your gap */
+  /* (we’re assuming .chat-wrapper { width: 320px } already) */
+}

@@ -4,6 +4,9 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, insert, update
 from app.database import database
 from app.models import Room, User, Square,Challenge
+from sqlalchemy import select, insert, update, func
+from app.models import Room, User, Square, Challenge, RoomUser
+from app.schemas import Player
 
 from app.schemas import (
     RoomCreate,
@@ -70,12 +73,24 @@ async def create_room(payload: RoomCreate):
     ]
     await database.execute_many(insert(Square), squares_to_insert)
 
-    return RoomOut(id=room_id, name=payload.name)
+    return RoomOut(id=room_id, name=payload.name, players=0)
 
 @router.get("", response_model=List[RoomOut])
 async def list_rooms():
-    rows = await database.fetch_all(select(Room.id, Room.name))
-    return [RoomOut(id=r["id"], name=r["name"]) for r in rows]
+    q = (
+      select(
+        Room.id,
+        Room.name,
+       func.count(RoomUser.user_id).label("players")
+      )
+      .outerjoin(RoomUser, Room.id == RoomUser.room_id)
+      .group_by(Room.id, Room.name)
+    )
+    rows = await database.fetch_all(q)
+    return [
+      RoomOut(id=r["id"], name=r["name"], players=r["players"])
+      for r in rows
+    ]
 
 
 @router.post("/{room_id}/join", response_model=JoinRoomResponse)
@@ -91,6 +106,13 @@ async def join_room(room_id: int, payload: JoinRoomRequest):
     if not user:
         raise HTTPException(404, "Użytkownik nie istnieje")
 
+    cnt = await database.fetch_one(
+        select(func.count()).select_from(RoomUser)
+         .where(RoomUser.room_id == room_id)
+    )
+    if cnt[0] >= 4:
+        raise HTTPException(409, "Pokój jest pełny (max 4 graczy)")
+    
     color = user["color"]
     if not color:
         color = pick_random_color()
@@ -99,6 +121,21 @@ async def join_room(room_id: int, payload: JoinRoomRequest):
             .where(User.id == payload.user_id)
             .values(color=color)
         )
+        # 2) Record membership (avoid duplicates)
+    exists = await database.fetch_one(
+        select(RoomUser).where(
+            RoomUser.room_id == room_id,
+            RoomUser.user_id == payload.user_id
+        )
+    )
+    if not exists:
+       await database.execute(
+            insert(RoomUser).values(
+                room_id=room_id,
+                user_id=payload.user_id
+            )
+        )
+
 
     return JoinRoomResponse(color=color)
 
@@ -226,22 +263,62 @@ async def claim_square(room_id: int, square_index: int, payload: ClaimSquareRequ
     )
 
     
+# app/routers/rooms.py
+
 @router.get("/{room_id}", response_model=RoomDetail)
 async def get_room(room_id: int):
-    # build an OUTER JOIN from rooms → users on winner_id
-    room_user_join = outerjoin(Room, User, Room.winner_id == User.id)
-    query = (
-        select(
-            Room.id,
-            Room.name,
-            Room.winner_id,
-            User.color.label("winner_color"),
-            User.email.label("winner_name"),
-        )
-        .select_from(room_user_join)
-        .where(Room.id == room_id)
+    # 1) Fetch the room detail + count as before
+    ru_join = outerjoin(Room, RoomUser, Room.id == RoomUser.room_id)
+    full_join = outerjoin(ru_join, User, Room.winner_id == User.id)
+
+    row = await database.fetch_one(
+      select(
+        Room.id,
+        Room.name,
+        Room.winner_id,
+        User.color.label("winner_color"),
+        User.email.label("winner_name"),
+        func.count(RoomUser.user_id).label("players_count")
+      )
+      .select_from(full_join)
+      .where(Room.id == room_id)
+      .group_by(Room.id, User.color, User.email)
     )
-    room = await database.fetch_one(query)
-    if not room:
+    if not row:
         raise HTTPException(404, "Pokój nie istnieje")
-    return RoomDetail(**room)
+
+    # 2) Fetch the actual player list
+    players_rows = await database.fetch_all(
+        select(User.id, User.email, User.color)
+        .select_from(RoomUser)                              # start from RoomUser
+        .join(User, RoomUser.user_id == User.id)            # then join into User
+        .where(RoomUser.room_id == room_id)                 # filter by room
+    )
+    players = [
+      {"id": p["id"], "email": p["email"], "color": p["color"]}
+      for p in players_rows
+    ]
+
+    return RoomDetail(
+      id=row["id"],
+      name=row["name"],
+      winner_id=row["winner_id"],
+      winner_color=row["winner_color"],
+      winner_name=row["winner_name"],
+      players_count=row["players_count"],
+      players=players
+    )
+@router.get("/{room_id}/players", response_model=List[Player])
+async def list_players(room_id: int):
+    # join RoomUser → User to get each player’s id, email, color
+    rows = await database.fetch_all(
+        select(User.id, User.email, User.color)
+        .select_from(RoomUser)
+        .join(User, RoomUser.user_id == User.id)
+        .where(RoomUser.room_id == room_id)
+    )
+    # map to Pydantic
+    return [
+        Player(id=r["id"], email=r["email"], color=r["color"])
+        for r in rows
+    ]

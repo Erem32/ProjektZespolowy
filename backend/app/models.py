@@ -45,3 +45,9 @@ class ChatMessage(Base):
     status = Column(String, nullable=False, default="pending", index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     square_index = Column(Integer, nullable=True, index=True)
+
+class RoomUser(Base):
+    __tablename__ = "room_users"
+    id      = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

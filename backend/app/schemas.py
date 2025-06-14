@@ -26,8 +26,9 @@ class RoomCreate(BaseModel):
 class RoomOut(BaseModel):
     id: int
     name: str
-
+    players: int           
     model_config = ConfigDict(from_attributes=True)
+
 
 class JoinRoomRequest(BaseModel):
     user_id: int
@@ -56,13 +57,20 @@ class SquareOut(BaseModel):
     text: str   # the challenge description
 
     model_config = ConfigDict(from_attributes=True)
+class Player(BaseModel):
+    id:   int
+    email: str
+    color: str
 class RoomDetail(BaseModel):
     id: int
     name: str
-    winner_id: Optional[int]          # nullable FK to users.id
-    winner_color: Optional[str]       # the color of the winner (if any)
+    winner_id: Optional[int]
+    winner_color: Optional[str]
+    winner_name: Optional[str]
+    players_count: int
+    players: List[Player]             
     model_config = ConfigDict(from_attributes=True)
-    winner_name: Optional[str] 
+
 
 class ChatMessageBase(BaseModel):
     text: Optional[str] = None
