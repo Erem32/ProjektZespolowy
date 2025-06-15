@@ -96,7 +96,7 @@ export default function RoomPage() {
                         ? { background: sq.color }
                         : {}
                   }
-                  onClick={() => free && setChatSquare(sq.index)}
+                  onClick={() => free && !isPending && setChatSquare(sq.index)}
                 >
                   {sq.text}
                 </div>

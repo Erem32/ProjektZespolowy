@@ -31,6 +31,32 @@ async def send_message(
     if not user:
         raise HTTPException(status_code=404, detail="Użytkownik nie istnieje")
 
+    
+    #Sprawdzenie czy kwadrat nie jest już zajęty
+    if square_index is not None:
+        
+        square = await database.fetch_one(
+            select(Square).where(
+                Square.room_id == room_id,
+                Square.index == square_index
+            )
+        )
+        if not square:
+            raise HTTPException(status_code=404, detail="Pole nie istnieje")
+        
+        if square["owner_id"] is not None:
+            raise HTTPException(status_code=409, detail="Pole zostało już zajęte")
+        
+        pending = await database.fetch_one(
+            select(ChatMessage).where(
+                ChatMessage.room_id == room_id,
+                ChatMessage.square_index == square_index,
+                ChatMessage.status == "pending"
+           )
+       )
+        if pending:
+            raise HTTPException(status_code=409, detail="Pole jest już w trakcie weryfikacji")
+    
     # 2) zapis pliku (jeśli jest)
     image_path = None
     if file:
