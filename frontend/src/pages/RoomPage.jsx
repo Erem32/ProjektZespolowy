@@ -1,4 +1,3 @@
-// frontend/src/pages/RoomPage.jsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,8 +14,8 @@ export default function RoomPage() {
   const [squares, setSquares] = useState([]);
   const [roomDetail, setRoomDetail] = useState(null);
   const [error, setError] = useState('');
-  const [chatSquare, setChatSquare] = useState(null);
-  const [pending, setPending] = useState({});
+  const [chatSquare, setChatSquare] = useState(null); // wybrane pole do dowodu
+  const [pending, setPending] = useState({}); // mapowanie index → kolor pending
 
   const loadRoom = async () => {
     try {
@@ -36,10 +35,14 @@ export default function RoomPage() {
       const res = await api.get(`/rooms/${roomId}/messages?status=pending`);
       const map = {};
       res.data.forEach((m) => {
-        if (m.square_index != null) map[m.square_index] = m.user_color;
+        if (m.square_index != null) {
+          map[m.square_index] = m.user_color;
+        }
       });
       setPending(map);
-    } catch {}
+    } catch {
+      // jeśli nie uda się pobrać pending, ignorujemy
+    }
   };
 
   useEffect(() => {
@@ -64,7 +67,7 @@ export default function RoomPage() {
       {error && <div className="error-message">{error}</div>}
 
       <div className="room-content">
-        {/* ← Sidebar */}
+        {/* Sidebar z listą graczy */}
         <aside className="players-sidebar">
           <h2>Gracze: {roomDetail?.players_count}/4</h2>
           <ul>
@@ -77,7 +80,7 @@ export default function RoomPage() {
           </ul>
         </aside>
 
-        {/* ← Bingo board */}
+        {/* Bingo board */}
         <div className="board-wrapper">
           <div className="bingo-board">
             {squares.map((sq) => {
@@ -96,7 +99,11 @@ export default function RoomPage() {
                         ? { background: sq.color }
                         : {}
                   }
-                  onClick={() => free && !isPending && setChatSquare(sq.index)}
+                  onClick={() => {
+                    if (free && !isPending) {
+                      setChatSquare(sq.index);
+                    }
+                  }}
                 >
                   {sq.text}
                 </div>
@@ -105,21 +112,26 @@ export default function RoomPage() {
           </div>
         </div>
 
-        {/* ← Chat panel */}
+        {/* Panel czatu */}
         <div className="chat-wrapper">
           <Chat
             roomId={roomId}
             userId={userId}
             squareIndex={chatSquare}
+            onSendProof={() => {
+              setChatSquare(null);
+              loadPending();
+            }}
             onApprove={() => {
               loadRoom();
               loadPending();
+              setChatSquare(null);
             }}
-            onSendProof={() => loadPending()}
           />
         </div>
       </div>
 
+      {/* Modal zwycięzcy */}
       {roomDetail?.winner_id && (
         <div className="modal-overlay">
           <div className="modal">
@@ -128,6 +140,9 @@ export default function RoomPage() {
             <p>
               Gracz <strong>{roomDetail.winner_name}</strong> wygrał grę.
             </p>
+            <button onClick={() => navigate('/dashboard')} className="back-button">
+              Powrót do listy pokoi
+            </button>
           </div>
         </div>
       )}

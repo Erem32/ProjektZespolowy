@@ -1,45 +1,71 @@
-/* frontend/src/components/Chat.css */
+/* src/components/Chat.css */
 .chat {
-  margin-top: 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid #ccc;
   padding: 1rem;
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
+  border-radius: 8px;
 }
 .chat-info {
   margin-bottom: 0.5rem;
   font-style: italic;
 }
 .messages {
-  flex: 1;
   max-height: 300px;
   overflow-y: auto;
   margin-bottom: 1rem;
 }
 .msg {
+  margin-bottom: 0.75rem;
   padding: 0.5rem;
-  border-bottom: 1px solid #eee;
+  border-radius: 6px;
+}
+.msg.approved {
+  background: #e0ffe0;
+}
+.msg.pending {
+  background: #fff5e6;
+}
+.msg.rejected {
+  background: #ffe0e0;
 }
 .msg-square {
-  font-size: 0.85rem;
-  color: #666;
+  font-weight: bold;
+  margin: 0.25rem 0;
 }
-.actions {
+.msg-text {
+  margin: 0.25rem 0;
+}
+.msg-media {
+  display: block;
+  max-width: 200px;
+  max-height: 200px;
   margin-top: 0.5rem;
-}
-.actions button {
-  margin-right: 0.5rem;
 }
 .chat-form {
   display: flex;
+  gap: 0.5rem;
   align-items: center;
 }
-.chat-form input {
+.chat-form input[type='text'] {
   flex: 1;
-  margin-right: 0.5rem;
+  padding: 0.4rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
+.chat-form input[type='file'] {
+  padding: 0.4rem 0;
+}
+.chat-form button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: #3498db;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.chat-form button:hover {
+  background: #2980b9;
 }
 .error {
-  color: red;
+  color: #d9534f;
   margin-top: 0.5rem;
 }
