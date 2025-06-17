@@ -15,41 +15,42 @@ export default function PasswordModal({ room, userId, onSuccess, onCancel }) {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || 'Błąd');
+        const { detail } = await res.json();
+        throw new Error(detail || 'Niepoprawne hasło');
       }
 
       const { color } = await res.json();
       onSuccess(color);
     } catch (err) {
-      /* ──────  JEDYNA ZMIANA  ──────
-         pokaż tekst lub, gdy obiekt, zserializuj go → brak [object Object] */
-      setError(
-        typeof err === 'string' ? err : err.message || JSON.stringify(err) || 'Niepoprawne hasło'
-      );
+      setError(err.message || 'Niepoprawne hasło');
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded shadow-lg w-80">
-        <h2 className="text-xl mb-4">Wejdź do {room.name}</h2>
+    <div className="modal-overlay">
+      <div className="modal-box">
+        <h2 className="modal-title">Wejdź do “{room.name}”</h2>
 
         <input
           type="password"
-          className="w-full border px-2 py-1 mb-2"
+          className="modal-input"
           placeholder="Hasło pokoju"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setError('');
+          }}
+          onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+          autoFocus
         />
 
-        {error && <div className="text-red-600 mb-2">{error}</div>}
+        {error && <div className="modal-error">{error}</div>}
 
-        <div className="flex justify-end space-x-2">
-          <button className="px-3 py-1 bg-gray-200 rounded" onClick={onCancel}>
+        <div className="modal-actions">
+          <button className="btn-cancel" onClick={onCancel}>
             Anuluj
           </button>
-          <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleJoin}>
+          <button className="btn-join" onClick={handleJoin}>
             Dołącz
           </button>
         </div>
