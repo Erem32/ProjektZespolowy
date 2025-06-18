@@ -8,6 +8,7 @@ export default function Chat({ roomId, userId, squareIndex, onApprove, onSendPro
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const timer = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   // 1) ładowanie wiadomości co 5s
   const load = async () => {
@@ -18,20 +19,30 @@ export default function Chat({ roomId, userId, squareIndex, onApprove, onSendPro
       console.error('Błąd ładowania czatu:', e);
     }
   };
+
   useEffect(() => {
     load();
     timer.current = setInterval(load, 5000);
     return () => clearInterval(timer.current);
   }, [roomId]);
 
-  // 2) czy wybrane pole jest teraz w pending?
+  // 2) scroll do dołu **tylko** w obrębie kontenera wiadomości
+  useEffect(() => {
+    // tylko gdy mamy ref i ekran szerszy niż 768px
+    if (window.innerWidth > 768 && messagesContainerRef.current) {
+      const c = messagesContainerRef.current;
+      c.scrollTop = c.scrollHeight;
+    }
+  }, [msgs]);
+
+  // 3) pending logic
   const pendingIdx = new Set(msgs.filter((m) => m.status === 'pending').map((m) => m.square_index));
   const isPending = squareIndex !== null && pendingIdx.has(squareIndex);
 
-  // 3) efekt: jeśli wybrane pole zmieni się na pending → resetujemy wybór
+  // 4) reset pola po przejściu na pending
   useEffect(() => {
     if (squareIndex !== null && isPending) {
-      onSendProof?.(); // tu rodzic powinien zresetować squareIndex → null
+      onSendProof?.();
     }
   }, [isPending, squareIndex, onSendProof]);
 
@@ -59,11 +70,9 @@ export default function Chat({ roomId, userId, squareIndex, onApprove, onSendPro
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      // wyczyść inputy i odśwież
       setText('');
       setFile(null);
       await load();
-      // *nie* resetujemy tu stanu, robi to efekt wyżej
     } catch (e) {
       console.error(e);
       setError(e.response?.data?.detail || 'Nie udało się wysłać wiadomości.');
@@ -89,14 +98,14 @@ export default function Chat({ roomId, userId, squareIndex, onApprove, onSendPro
           : 'Kliknij pole, aby wysłać dowód lub wpisz tekst poniżej.'}
       </div>
 
-      <div className="messages">
+      <div className="messages" ref={messagesContainerRef}>
         {msgs.map((m) => (
           <div key={m.id} className={`msg ${m.status}`}>
             <strong>Użytkownik {m.user_id}:</strong>
             {m.square_index != null && <p className="msg-square">Pole #{m.square_index}</p>}
             {m.text && <p className="msg-text">{m.text}</p>}
             {m.image_path &&
-              (/\.(mp4|webm|ogg)$/.test(m.image_path) ? (
+              (/\.(mp4|webm|ogg)$/i.test(m.image_path) ? (
                 <video src={m.image_path} controls className="msg-media" />
               ) : (
                 <img src={m.image_path} alt="plik" className="msg-media" />

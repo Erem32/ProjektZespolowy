@@ -1,18 +1,30 @@
 /* src/components/Chat.css */
+
+/* Kontener czatu jako flex-column */
 .chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* musi dziedziczyć wysokość od parenta (.chat-wrapper) */
   border: 1px solid #ccc;
   padding: 1rem;
   border-radius: 8px;
+  box-sizing: border-box;
 }
+
+/* Nagłówek / info czatu */
 .chat-info {
   margin-bottom: 0.5rem;
   font-style: italic;
 }
+
+/* Wiadomości */
 .messages {
-  max-height: 300px;
+  flex: 1; /* rośnie i wypełnia całą wolną przestrzeń */
   overflow-y: auto;
   margin-bottom: 1rem;
 }
+
+/* Pojedyncze wiadomości */
 .msg {
   margin-bottom: 0.75rem;
   padding: 0.5rem;
@@ -40,31 +52,39 @@
   max-height: 200px;
   margin-top: 0.5rem;
 }
+
+/* Formularz czatu (input + file + button) */
 .chat-form {
   display: flex;
+  flex-direction: column; /* pionowo: input, file, button */
   gap: 0.5rem;
-  align-items: center;
 }
 .chat-form input[type='text'] {
-  flex: 1;
+  width: 100%;
   padding: 0.4rem;
   border: 1px solid #bbb;
   border-radius: 4px;
+  box-sizing: border-box;
 }
 .chat-form input[type='file'] {
-  padding: 0.4rem 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 .chat-form button {
+  width: 100%;
   padding: 0.5rem 1rem;
   border: none;
   background: #3498db;
   color: white;
   border-radius: 4px;
   cursor: pointer;
+  box-sizing: border-box;
 }
 .chat-form button:hover {
   background: #2980b9;
 }
+
+/* Komunikaty o błędach */
 .error {
   color: #d9534f;
   margin-top: 0.5rem;
