@@ -42,8 +42,10 @@ models.Base.metadata.create_all(bind=engine)
 
 
 # app=FastAPI(lifespan=lifespan)
-
-origins = ["http://localhost:3000"]
+origins = [
+    "http://localhost:3000",
+    "https://bingofrontend.onrender.com"
+]
 
 app.add_middleware(
     CORSMiddleware,
