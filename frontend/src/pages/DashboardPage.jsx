@@ -22,9 +22,8 @@ export default function DashboardPage({ userId }) {
   // pobieranie listy pokoi
   useEffect(() => {
     api.get('/rooms')
-      .then((res) => res.json())
-      .then(setRooms)
-      .catch(console.error);
+    .then((res) => setRooms(res.data))
+    .catch(console.error);
   }, []);
 
   // filtrowanie
