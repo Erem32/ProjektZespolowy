@@ -14,15 +14,12 @@ export default function PasswordModal({ room, userId, onSuccess, onCancel }) {
         password,
       });
 
-      if (!res.ok) {
-        const { detail } = await res.json();
-        throw new Error(detail || 'Niepoprawne hasło');
-      }
-
-      const { color } = await res.json();
+      const { color } = res.data;
       onSuccess(color);
     } catch (err) {
-      setError(err.message || 'Niepoprawne hasło');
+      const message =
+		err.response?.data?.detail || err.message || 'Incorrect password';
+		setError(message);
     }
   };
 
