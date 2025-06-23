@@ -1,5 +1,6 @@
 // src/components/PasswordModal.jsx
 import { useState } from 'react';
+import api from '../api';
 import './PasswordModal.css';
 
 export default function PasswordModal({ room, userId, onSuccess, onCancel }) {
@@ -8,10 +9,9 @@ export default function PasswordModal({ room, userId, onSuccess, onCancel }) {
 
   const handleJoin = async () => {
     try {
-      const res = await fetch(`/rooms/${room.id}/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, password }),
+      const res = await api.post(`/rooms/${room.id}/join`, {
+        user_id: userId,
+        password,
       });
 
       if (!res.ok) {

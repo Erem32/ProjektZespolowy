@@ -1,6 +1,7 @@
 // src/pages/CreateRoomPage.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';
 import './CreateRoomPage.css';
 
 export default function CreateRoomPage() {
@@ -14,10 +15,10 @@ export default function CreateRoomPage() {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch('/rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, password, category }),
+      const res = await api.post('/rooms', {
+        name,
+        password,
+        category,
       });
       if (!res.ok) {
         const err = await res.json();
