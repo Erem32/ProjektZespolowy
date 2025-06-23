@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import PasswordModal from '../components/PasswordModal';
+import api from '../api';
 import './DashboardPage.css';
 
 export default function DashboardPage({ userId }) {
@@ -20,7 +21,7 @@ export default function DashboardPage({ userId }) {
 
   // pobieranie listy pokoi
   useEffect(() => {
-    fetch('/rooms')
+    api.get('/rooms')
       .then((res) => res.json())
       .then(setRooms)
       .catch(console.error);
