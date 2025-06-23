@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import api from '../api';
+import api, { baseURL } from '../api';
 import './Chat.css';
 
 export default function Chat({ roomId, userId, squareIndex, onApprove, onSendProof }) {
@@ -106,9 +106,9 @@ export default function Chat({ roomId, userId, squareIndex, onApprove, onSendPro
             {m.text && <p className="msg-text">{m.text}</p>}
             {m.image_path &&
               (/\.(mp4|webm|ogg)$/i.test(m.image_path) ? (
-                <video src={m.image_path} controls className="msg-media" />
+                <video src={`${baseURL}${m.image_path}`} controls className="msg-media" />
               ) : (
-                <img src={m.image_path} alt="plik" className="msg-media" />
+                <img src={`${baseURL}${m.image_path}`} alt="plik" className="msg-media" />
               ))}
             {m.status === 'pending' && m.user_id !== userId && (
               <div className="actions">
