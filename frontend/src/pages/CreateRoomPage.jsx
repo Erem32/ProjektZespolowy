@@ -15,18 +15,16 @@ export default function CreateRoomPage() {
     e.preventDefault();
     setError('');
     try {
-      const res = await api.post('/rooms', {
+      await api.post('/rooms', {
         name,
         password,
         category,
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || 'Błąd tworzenia pokoju');
-      }
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message);
+      const message =
+        err.response?.data?.detail || err.message || 'Error creating room';
+      setError(message);
     }
   };
 
