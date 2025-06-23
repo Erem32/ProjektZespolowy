@@ -1,4 +1,9 @@
-# TEMP: Ręczne odtwarzanie bazy PostgreSQL na maszynie
+### Frontend: [https://bingofrontend.onrender.com](https://bingofrontend.onrender.com)
+### Backend: [https://bingobackend-wfqp.onrender.com/](https://bingobackend-wfqp.onrender.com/)
+
+Przy nieaktywności backend zasypia, próba aktywności powinna go wybudzić - pod drugim linkiem można zobaczyć czy jest aktywny, czy się ładuje
+
+## Poniższa baza danych PostgreSQL została już odtworzona w serwisie Render
 
 Dla uwidocznienia, że połączenie jest z PostgreSQL i nie SQLite, nazwa jednego z pokoi została zmieniona na `POSTGRESQL`.
 
