@@ -1,37 +1,151 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import BingoBoard from '../components/BingoBoard';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../api';
 import './RoomPage.css';
+import Chat from '../components/Chat';
 
 export default function RoomPage() {
-  const { id } = useParams();
+  const { id: roomId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const userId = user?.id;
+
+  const [squares, setSquares] = useState([]);
+  const [roomDetail, setRoomDetail] = useState(null);
   const [error, setError] = useState('');
-  const [cells, setCells] = useState([]);
+  const [chatSquare, setChatSquare] = useState(null); // wybrane pole do dowodu
+  const [pending, setPending] = useState({}); // mapowanie index → kolor pending
+
+  const loadRoom = async () => {
+    try {
+      const [sqRes, detRes] = await Promise.all([
+        api.get(`/rooms/${roomId}/squares`),
+        api.get(`/rooms/${roomId}`),
+      ]);
+      setSquares(sqRes.data);
+      setRoomDetail(detRes.data);
+    } catch {
+      setError('Nie udało się załadować pokoju.');
+    }
+  };
+
+  const loadPending = async () => {
+    try {
+      const res = await api.get(`/rooms/${roomId}/messages?status=pending`);
+      const map = {};
+      res.data.forEach((m) => {
+        if (m.square_index != null) {
+          map[m.square_index] = m.user_color;
+        }
+      });
+      setPending(map);
+    } catch {
+      // jeśli nie uda się pobrać pending, ignorujemy
+    }
+  };
 
   useEffect(() => {
-    // tutaj fetchujesz komórki z API, na razie wrzucimy przykładowe:
-    const initial = Array.from({ length: 25 }, (_, i) => ({
-      id: i + 1,
-      value: i + 1,
-      status: 'free',
-    }));
-    setCells(initial);
-  }, [id]);
-
-  const handleCellClick = (cellId) => {
-    // tutaj Twój kod rezerwacji, np. fetch do backendu
-    // w razie błędu:
-    // setError('Błąd rezerwacji pola.');
-    console.log('Kliknięto komórkę', cellId);
-  };
+    loadRoom();
+    loadPending();
+    const iv = setInterval(() => {
+      loadRoom();
+      loadPending();
+    }, 5000);
+    return () => clearInterval(iv);
+  }, [roomId]);
 
   return (
     <div className="room-container">
-      <h1 className="room-title">Pokój: {id}</h1>
-      {error && <div className="error-message">{error}</div>}
-      <div className="board-wrapper">
-        <BingoBoard cells={cells} onCellClick={handleCellClick} />
+      <div className="room-header">
+        <button onClick={() => navigate('/dashboard')} className="back-button">
+          ← Powrót
+        </button>
+        <h1 className="room-title">Pokój #{roomId}</h1>
       </div>
+
+      {error && <div className="error-message">{error}</div>}
+
+      <div className="room-content">
+        {/* Sidebar z listą graczy */}
+        <aside className="players-sidebar">
+          <h2>Gracze: {roomDetail?.players_count}/4</h2>
+          <ul>
+            {roomDetail?.players.map((p) => (
+              <li key={p.id}>
+                <span className="player-color-block" style={{ background: p.color }} />
+                {p.email}
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        {/* Bingo board */}
+        <div className="board-wrapper">
+          <div className="bingo-board">
+            {squares.map((sq) => {
+              const free = !sq.owner_id;
+              const lightColor = pending[sq.index];
+              const isPending = free && Boolean(lightColor);
+
+              return (
+                <div
+                  key={sq.id}
+                  className={isPending ? 'cell pending' : free ? 'cell free' : 'cell taken'}
+                  style={
+                    isPending
+                      ? { background: lightColor, opacity: 0.5, cursor: 'default' }
+                      : sq.color && !free
+                        ? { background: sq.color }
+                        : {}
+                  }
+                  onClick={() => {
+                    if (free && !isPending) {
+                      setChatSquare(sq.index);
+                    }
+                  }}
+                >
+                  {sq.text}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Panel czatu */}
+        <div className="chat-wrapper">
+          <Chat
+            roomId={roomId}
+            userId={userId}
+            squareIndex={chatSquare}
+            onSendProof={() => {
+              setChatSquare(null);
+              loadPending();
+            }}
+            onApprove={() => {
+              loadRoom();
+              loadPending();
+              setChatSquare(null);
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Modal zwycięzcy */}
+      {roomDetail?.winner_id && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>🏆 Mamy zwycięzcę!</h2>
+            <div className="winner-color-block" style={{ background: roomDetail.winner_color }} />
+            <p>
+              Gracz <strong>{roomDetail.winner_name}</strong> wygrał grę.
+            </p>
+            <button onClick={() => navigate('/dashboard')} className="back-button">
+              Powrót do listy pokoi
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

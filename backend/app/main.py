@@ -9,8 +9,12 @@ from app.database import engine, Base
 from app import models
 from fastapi import FastAPI
 from app.database import database
-
+from app.routers import rooms
+from app.routers import chat
+from fastapi.staticfiles import StaticFiles
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 @app.on_event("startup")
 async def startup():
@@ -26,8 +30,6 @@ models.Base.metadata.create_all(bind=engine)
 
 
 
-app = FastAPI()
-
 
 # @asynccontextmanager
 # async def lifespan(app:FastAPI):
@@ -40,8 +42,10 @@ app = FastAPI()
 
 
 # app=FastAPI(lifespan=lifespan)
-
-origins = ["http://localhost:3000"]
+origins = [
+    "http://localhost:3000",
+    "https://bingofrontend.onrender.com"
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,10 +57,14 @@ app.add_middleware(
 
 app.include_router(register.router)
 app.include_router(login.router)
+app.include_router(rooms.router)
+app.include_router(chat.router)
+
 @app.get("/ping")
 async def ping():
     return{"message":"pong"}
 
 
-if __name__ =="__main__":
-    uvicorn.run(app,host="0.0.0.0",port = 8000)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
